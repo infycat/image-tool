@@ -1,6 +1,6 @@
 # 批量去背景工具（Batch BG Remover）
 
-![icon]((https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/icon.png)
+![icon](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/icon.png)
 
 一個仿 remove.bg 桌面版風格的**批量圖片去背景工具**，使用純本地演算法（不需網路、不上傳圖片），整合三大去背景精華技術，並附帶完整的**批量預處理**（旋轉／翻轉／區域截取）與**即時預覽**功能。
 
