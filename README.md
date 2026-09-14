@@ -59,13 +59,21 @@ Windows 用戶也可直接雙擊 `開啓批量去背景工具.bat`。
 
 **使用步驟：**
 
-1. 把圖片拖進左側清單（或按「＋ 新增圖片／＋ 新增資料夾」）
-2. （可選）設定輸出目錄，預設為 `桌面\去背輸出`
-3. （可選）套用批量預處理：
-   - 按「↺ 逆時針 90°」「↔ 水平翻轉」等按鈕旋轉／翻轉
-   - 在右側「變換後」預覽上**拖曳框選**裁切區域（可隨時「✂ 清除裁切」）
-   - 勾選「去除背景」以在預覽中查看去背效果
-4. 按「▶ 開始批量處理」，輸出透明 PNG 到指定資料夾
+**① 加入圖片** —— 把圖片拖進左側清單（或按「＋ 新增圖片／＋ 新增資料夾」），右側即時顯示「原圖 vs 變換後」預覽：
+
+![步驟 1：加入圖片並即時預覽](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step1.png)
+
+**② 設定輸出目錄**（可選）—— 預設為 `桌面\去背輸出`
+
+**③ 套用批量預處理**（可選）—— 旋轉／翻轉、在「變換後」預覽上拖曳框選裁切區域、勾選「去除背景」即時查看去背效果
+
+**④ 開始批量處理** —— 勾選「去除背景」後按「▶ 開始批量處理」，輸出透明 PNG：
+
+![步驟 2：勾選「去除背景」並按「開始批量處理」](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step2.png)
+
+**⑤ 查看輸出** —— 處理完成的透明 PNG 會存放於輸出資料夾：
+
+![步驟 3：輸出資料夾中的透明 PNG 結果](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step3.png)
 
 ### 參數說明（去背參數列）
 
@@ -147,6 +155,7 @@ python batch_bg_remover.py --smoke
 image-tool/
 ├── batch_bg_remover.py      # 主程式（演算法 + GUI + CLI）
 ├── icon.png                 # 視窗圖示
+├── step1.png / step2.png / step3.png   # 使用步驟截圖（README 內嵌）
 ├── 開啓批量去背景工具.bat     # Windows 一鍵啟動
 └── README.md                # 本說明文件
 ```
