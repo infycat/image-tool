@@ -149,8 +149,7 @@ image-tool/
 ├── batch_bg_remover.py      # 主程式（演算法 + GUI + CLI）
 ├── icon.png                 # 視窗圖示
 ├── 開啓批量去背景工具.bat     # Windows 一鍵啟動
-├── README.md                # 本說明文件
-└── build/ dist/             # PyInstaller 打包產物（可執行檔）
+└── README.md                # 本說明文件
 ```
 
 ---
