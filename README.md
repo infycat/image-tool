@@ -1,167 +1,149 @@
-# 批量去背景工具（Batch BG Remover）
+# Batch BG Remover｜批量去背景工具
 
-![icon](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/icon.png)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4?logo=windows)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Release](https://img.shields.io/github/v/release/infycat/image-tool?display_name=tag)
+![License](https://img.shields.io/badge/license-not%20specified-lightgrey)
 
-一個仿 remove.bg 桌面版風格的**批量圖片去背景工具**，使用純本地演算法（不需網路、不上傳圖片），整合三大去背景精華技術，並附帶完整的**批量預處理**（旋轉／翻轉／區域截取）與**即時預覽**功能。
+一款重視隱私的 Windows 批量圖片去背景工具。所有圖片均在本機處理，不需網路，也不會上傳到任何伺服器。除了透明背景輸出，也支援批量旋轉、翻轉、裁切、即時預覽與命令列操作。
 
----
+![Batch BG Remover icon](https://raw.githubusercontent.com/infycat/image-tool/main/icon.png)
+
+## 下載 Windows 版
+
+前往 **[Releases 下載最新版](https://github.com/infycat/image-tool/releases/latest)**。
+
+- 推薦：下載 Release 內的 `Batch-BG-Remover-v1.0.0-Windows-x64.zip`，解壓後雙擊 `batch_bg_remover.exe`。
+- 單獨的 `batch_bg_remover.exe` 也保留在 Release 資產中；若該檔在你的環境無法啟動，請改用完整 ZIP 版。
+- Windows SmartScreen 可能會提示「Windows 已保護您的電腦」，這是未購買程式碼簽章憑證的常見提示。請先核對 Release 內的 SHA-256，再自行決定是否執行。
+- 後續版本會繼續發布到 [Releases](https://github.com/infycat/image-tool/releases)，可在 GitHub 點選 **Watch → Custom → Releases** 接收更新通知。
+
+> Windows 版不需要另外安裝 Python。原始碼使用者請參考下方「從原始碼執行」。
 
 ## 功能特色
 
-### 去背景（核心）
-整合三層去背景演算法，輸出透明背景 PNG：
+### 去背景核心
 
-1. **色度鍵 Chroma Key** —— 自動取樣圖片四角區域的平均色作為背景參考色；以「距離雙閾值 + smoothstep 平滑過渡」計算每一像素的透明度，背景變透明、前景邊緣柔和，避免鋸齒。
-2. **綠色溢色抑制 Spill Suppression** —— 壓掉前景邊緣混入的背景綠色，減少「綠邊」殘留。
-3. **連通域清理 Connected-Component Cleanup** —— 只保留最大連通域（角色主體），自動清除背景上殘留的水印、雜散像素與噪點。
+1. **色度鍵（Chroma Key）**：自動取樣圖片四角的平均色作為背景參考，以雙閾值與 smoothstep 計算透明度，減少鋸齒。
+2. **綠色溢色抑制（Spill Suppression）**：降低前景邊緣混入的背景綠色，減少綠邊。
+3. **連通域清理（Connected-Component Cleanup）**：保留主要主體並清除水印、雜散像素與噪點。
 
-### 批量預處理（套用到全部圖片）
+### 批量處理
+
 | 功能 | 說明 |
 |---|---|
-| 旋轉 | ↺ 逆時針 90° / ↻ 順時針 90° / 180° / **自訂任意角度** |
-| 翻轉 | ↔ 水平（左右） / ↕ 垂直（上下） |
-| 區域截取（裁切） | 在「變換後」預覽上**滑鼠拖曳框選**要保留的區域，批量處理時按比例裁切每一張圖片，**輸出尺寸隨框選區域改變** |
-| 即時預覽 | 點擊清單圖片，右側上下排列顯示「原圖 vs 變換後」；勾選「去除背景」即時以棋盤格底顯示去背效果，所見即所得 |
+| 旋轉 | 逆時針 90°、順時針 90°、180° 或自訂任意角度 |
+| 翻轉 | 水平或垂直翻轉 |
+| 裁切 | 在預覽畫面拖曳框選，依比例批量套用到所有圖片 |
+| 即時預覽 | 對照原圖與變換後效果，去背結果以棋盤格背景顯示 |
+| 拖放匯入 | 支援多張圖片、含空格路徑與 `file://` URI |
+| 安全輸出 | 同名檔案自動加上 `_1`、`_2`，不覆蓋既有輸出 |
 
-### 檔案管理
-- 多張圖片**拖拽**加入（支援路徑含空格、`file://` URI 等格式）
-- 「新增圖片」「新增資料夾」（自動遞迴掃描資料夾內所有圖片）
-- 清單顯示：檔案名稱、大小、狀態／已套用的變換
-- 同名輸出自動加 `_1`、`_2` 後綴，不會覆蓋
-- 支援格式：PNG / JPG / JPEG / BMP / WEBP / GIF / TIF / TIFF
+支援 PNG、JPG、JPEG、BMP、WEBP、GIF、TIF 與 TIFF。
 
----
+## 使用方法
 
-## 環境需求
+1. 拖入圖片，或選擇「新增圖片／新增資料夾」。
+2. 選擇輸出資料夾；預設為桌面的「去背輸出」。
+3. 視需要設定旋轉、翻轉與裁切，並勾選「去除背景」。
+4. 按下「開始批量處理」。
 
-- Python **3.10+**
-- 依賴套件：
+![步驟 1：加入圖片並即時預覽](https://raw.githubusercontent.com/infycat/image-tool/main/step1.png)
 
-```
-pip install pillow numpy scipy tkinterdnd2
-```
+![步驟 2：設定去背並開始處理](https://raw.githubusercontent.com/infycat/image-tool/main/step2.png)
 
-> `numpy`、`scipy`：用於連通域清理（水印／雜點清除）。若未安裝，程式仍可執行，只是會跳過第 3 步清理。
->
-> `tkinterdnd2`：提供拖拽支援。若未安裝，自動退化成一般 Tk 視窗（無拖拽功能）。
+![步驟 3：查看輸出結果](https://raw.githubusercontent.com/infycat/image-tool/main/step3.png)
 
----
+### 去背參數
 
-## 快速開始
+| 參數 | 預設值 | 作用 |
+|---|---:|---|
+| LO（背景閾值下限） | 55 | 越高會移除越多背景 |
+| HI（前景閾值上限） | 115 | 越高越保守，能保留更多前景 |
+| 雜塊面積下限 | 3000 | 小於此面積的孤立連通域會被清除 |
 
-### GUI 模式
+## 從原始碼執行
 
-```bash
+需求：Windows、Python 3.10 或以上。
+
+```powershell
+git clone https://github.com/infycat/image-tool.git
+cd image-tool
+python -m pip install -r requirements.txt
 python batch_bg_remover.py
 ```
 
-Windows 用戶也可直接雙擊 `開啓批量去背景工具.bat`。
+Windows 使用者亦可雙擊 `開啓批量去背景工具.bat`。
 
-**使用步驟：**
+### 命令列模式
 
-**① 加入圖片** —— 把圖片拖進左側清單（或按「＋ 新增圖片／＋ 新增資料夾」），右側即時顯示「原圖 vs 變換後」預覽：
-
-![步驟 1：加入圖片並即時預覽](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step1.png)
-
-**② 設定輸出目錄**（可選）—— 預設為 `桌面\去背輸出`
-
-**③ 套用批量預處理**（可選）—— 旋轉／翻轉、在「變換後」預覽上拖曳框選裁切區域、勾選「去除背景」即時查看去背效果
-
-**④ 開始批量處理** —— 勾選「去除背景」後按「▶ 開始批量處理」，輸出透明 PNG：
-
-![步驟 2：勾選「去除背景」並按「開始批量處理」](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step2.png)
-
-**⑤ 查看輸出** —— 處理完成的透明 PNG 會存放於輸出資料夾：
-
-![步驟 3：輸出資料夾中的透明 PNG 結果](https://raw.githubusercontent.com/infycat/image-tool/refs/heads/main/step3.png)
-
-### 參數說明（去背參數列）
-
-| 參數 | 預設值 | 作用 |
-|---|---|---|
-| LO（背景閾值下限） | 55 | 與背景色距離 ≤ LO 的像素視為背景（全透明）。**LO 越高，刪掉的背景越多** |
-| HI（上限） | 115 | 與背景色距離 ≥ HI 的像素視為前景（不透明）。**HI 越高越保守** |
-| 雜塊面積下限 | 3000 | 面積小於此值的孤立連通域會被清除（水印／噪點） |
-
-一般保持預設即可；若背景移除不乾淨調高 LO，若誤刪前景則調高 HI。
-
----
-
-## 命令列模式（CLI）
-
-適合腳本化／批次自動化，不開視窗：
-
-```bash
+```powershell
 python batch_bg_remover.py --cli <輸入資料夾> <輸出資料夾> [選項]
 ```
 
 | 選項 | 說明 |
 |---|---|
-| `--rotate <角度>` | 旋轉角度，如 `90`、`-90`、`180` |
-| `--flip h\|v` | 水平翻轉（h）或垂直翻轉（v） |
-| `--crop x0,y0,x1,y1` | 裁切框（0~1 歸一化比例），如 `--crop 0,0,0.5,1.0` 裁切左半 |
-| `--no-bg` | 不去背景，只套用變換／裁切 |
+| `--rotate <角度>` | 旋轉角度，例如 `90`、`-90` 或 `180` |
+| `--flip h\|v` | 水平翻轉（`h`）或垂直翻轉（`v`） |
+| `--crop x0,y0,x1,y1` | 以 0～1 歸一化比例裁切 |
+| `--no-bg` | 不去背景，只套用變換與裁切 |
 
-**範例：** 對 `frames` 資料夾全部圖片裁切左半、順時針轉 90°，保留背景：
+範例：
 
-```bash
+```powershell
 python batch_bg_remover.py --cli frames output --rotate 90 --crop 0,0,0.5,1.0 --no-bg
 ```
 
----
+## 建置 Windows 版本
 
-## 核心演算法說明
+完整的 PyInstaller 設定、圖示與建置腳本都已收錄在倉庫中：
 
-```
-輸入圖片
-  │
-  ▼
-① 色度鍵 Chroma Key
-   四角取樣背景色 → 逐像素距離計算 → 雙閾值 + smoothstep 平滑 alpha
-  │
-  ▼
-② 綠色溢色抑制
-   邊緣半透明像素綠色偏高 → 壓低綠色通道
-  │
-  ▼
-③ 連通域清理
-   保留最大連通域 → 清除水印／雜散像素
-  │
-  ▼
-套用變換（旋轉／翻轉）→ 區域裁切 → 輸出透明 PNG
+```powershell
+python -m pip install -r requirements-build.txt
+.\build.ps1
 ```
 
-> 變換／裁切發生在去背景之前（處理順序：旋轉翻轉 → 裁切 → 去背景），確保預覽所見即輸出所得。
+建置結果位於 `dist\batch_bg_remover\`。發布時應將整個資料夾壓縮成 ZIP，避免遺漏 `_internal` 依賴。
 
----
+## 測試
 
-## 自測
-
-內建兩組測試，方便確認程式在目前環境正常運作：
-
-```bash
-# 完整自測（解析／變換／去背／裁切邏輯，不開視窗）
+```powershell
+# 演算法與 CLI 自測
 python batch_bg_remover.py --selftest
 
-# GUI 冒煙測試（開啟視窗 1.2 秒後自動關閉）
+# GUI 冒煙測試（約 1.2 秒後自動關閉）
 python batch_bg_remover.py --smoke
 ```
 
----
+## 專案結構
 
-## 檔案結構
-
-```
+```text
 image-tool/
-├── batch_bg_remover.py      # 主程式（演算法 + GUI + CLI）
-├── icon.png                 # 視窗圖示
-├── step1.png / step2.png / step3.png   # 使用步驟截圖（README 內嵌）
-├── 開啓批量去背景工具.bat     # Windows 一鍵啟動
-└── README.md                # 本說明文件
+├── batch_bg_remover.py       # GUI、CLI 與核心演算法
+├── batch_bg_remover.spec     # PyInstaller 建置設定
+├── build.ps1                 # Windows 建置腳本
+├── build_assets/icon.ico     # EXE 圖示
+├── requirements.txt          # 執行依賴
+├── requirements-build.txt    # 建置依賴
+├── icon.png                  # 應用程式圖示
+├── step1.png                 # 操作截圖
+├── step2.png
+├── step3.png
+├── 開啓批量去背景工具.bat    # Windows 原始碼快捷啟動
+└── README.md
 ```
 
----
+## 隱私與安全
 
-## 隱私說明
+- 所有圖片皆在本機處理。
+- 程式不會自動上傳圖片或分析結果。
+- 建議只從本倉庫的 [Releases](https://github.com/infycat/image-tool/releases) 下載，並核對 SHA-256。
 
-所有處理皆在本機完成，圖片不會上傳至任何伺服器。
+## 版本紀錄
+
+### v1.0.0 — 2026-10-20
+
+- 首次提供正式 GitHub Release。
+- 提供 Windows x64 可執行檔與完整可攜式 ZIP。
+- 補齊 PyInstaller 設定、建置腳本、依賴清單與原始碼。
+- 改善下載、更新通知、建置與驗證說明。

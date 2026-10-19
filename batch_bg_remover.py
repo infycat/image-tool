@@ -33,12 +33,7 @@ from pathlib import Path
 
 from PIL import Image
 
-try:
-    import numpy as np
-    from scipy import ndimage
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
+# numpy / scipy 延遲到「連通域清理」才導入（加快 GUI 啟動）
 
 # ---------------------------------------------------------------------------
 # 核心去背景演算法
@@ -118,7 +113,13 @@ def chroma_key(img, lo=55.0, hi=115.0, min_area=3000):
             px[x, y] = (r, g, b, a)
 
     # 3) 連通域清理：只保留最大連通域（角色主體），清除水印等小雜塊
-    if HAS_SCIPY:
+    try:
+        import numpy as np
+        from scipy import ndimage
+        _has_scipy = True
+    except ImportError:
+        _has_scipy = False
+    if _has_scipy:
         alpha = np.frombuffer(img.getchannel("A").tobytes(), dtype=np.uint8).reshape(H, W)
         mask = alpha > 0
         lbl, n = ndimage.label(mask, structure=np.ones((3, 3)))
@@ -717,6 +718,14 @@ def build_gui():
 
 
 def main():
+    # 舊編碼控制台（如 cp950）遇到非 ASCII 輸出會崩潰 → 強制 UTF-8 輸出，失敗時以 ? 兜底
+    for _s in (sys.stdout, sys.stderr):
+        if _s is not None:
+            try:
+                _s.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
     # CLI 自測模式：python batch_bg_remover.py --cli 圖片資料夾 輸出資料夾 [--rotate 90] [--flip h]
     if len(sys.argv) >= 3 and sys.argv[1] == "--cli":
         src, dst = sys.argv[2], sys.argv[3]
@@ -741,9 +750,9 @@ def main():
             out = unique_output_path(dst, f)
             try:
                 w, h = process_image(os.path.join(src, f), out, transforms=transforms or None, do_bg=do_bg, crop=crop)
-                print(f"  ✓ {f} -> {os.path.basename(out)} ({w}x{h})")
+                print(f"  [PASS] {f} -> {os.path.basename(out)} ({w}x{h})")
             except Exception as e:
-                print(f"  ✗ {f}: {e}")
+                print(f"  [FAIL] {f}: {e}")
         return 0
 
     # 自測模式：驗證解析 / 清單 / 變換 / 去背邏輯（不開視窗）
@@ -762,26 +771,26 @@ def main():
         for raw, expect in cases:
             got = parse_drop_data(raw)
             if got != expect:
-                print(f"✗ 解析失敗: {raw!r} -> {got} (期望 {expect})")
+                print(f"[FAIL] 解析失敗: {raw!r} -> {got} (期望 {expect})")
                 return 1
-        print("✓ 拖拽解析 5 種格式全部通過")
+        print("[PASS] 拖拽解析 5 種格式全部通過")
 
         # 2) 變換應用：旋轉 90° 交換寬高、水平翻轉鏡像像素
         img = Image.new("RGBA", (4, 8), (0, 0, 0, 0))
         img.putpixel((0, 1), (255, 0, 0, 255))
         r = apply_transforms(img, [{"type": "rotate", "angle": 90}])
         if r.size != (8, 4):
-            print(f"✗ 旋轉90°尺寸錯誤: {r.size} != (8,4)")
+            print(f"[FAIL] 旋轉90°尺寸錯誤: {r.size} != (8,4)")
             return 1
         f = apply_transforms(img, [{"type": "flip", "axis": "h"}])
         if f.getpixel((3, 1)) != (255, 0, 0, 255):
-            print(f"✗ 水平翻轉鏡像錯誤: {f.getpixel((3,1))}")
+            print(f"[FAIL] 水平翻轉鏡像錯誤: {f.getpixel((3,1))}")
             return 1
         v = apply_transforms(img, [{"type": "flip", "axis": "v"}])
         if v.getpixel((0, 6)) != (255, 0, 0, 255):
-            print(f"✗ 垂直翻轉鏡像錯誤: {v.getpixel((0,6))}")
+            print(f"[FAIL] 垂直翻轉鏡像錯誤: {v.getpixel((0,6))}")
             return 1
-        print("✓ 旋轉 / 水平翻轉 / 垂直翻轉 通過")
+        print("[PASS] 旋轉 / 水平翻轉 / 垂直翻轉 通過")
 
         # 3) 清單資料流（對應 refresh_list 核心計算）
         tmp = tempfile.mkdtemp()
@@ -793,7 +802,7 @@ def main():
             sz = os.path.getsize(p) / 1024
             name = os.path.basename(p)
             if name != "test_img.png" or sz <= 0:
-                print("✗ 清單資料計算失敗")
+                print("[FAIL] 清單資料計算失敗")
                 return 1
             # 4) 輸出路徑唯一性
             dst_dir = os.path.join(tmp, "out")
@@ -802,43 +811,43 @@ def main():
             Image.new("RGBA", (4, 4)).save(o1)
             o2 = unique_output_path(dst_dir, "test_img.png")
             if o1 == o2:
-                print("✗ 同名輸出未自動加後綴")
+                print("[FAIL] 同名輸出未自動加後綴")
                 return 1
             # 5) 去背演算法（純色底 8x8）+ 帶變換
             Image.new("RGB", (8, 8), (0, 200, 60)).save(os.path.join(tmp, "bg.png"))
             o3 = unique_output_path(dst_dir, "bg.png")
             w, h = remove_background(os.path.join(tmp, "bg.png"), o3)
             if w != 8 or h != 8:
-                print("✗ 去背演算法尺寸錯誤")
+                print("[FAIL] 去背演算法尺寸錯誤")
                 return 1
             o4 = unique_output_path(dst_dir, "bg2.png")
             w2, h2 = remove_background(os.path.join(tmp, "bg.png"), o4,
                                        transforms=[{"type": "rotate", "angle": 90}])
             if (w2, h2) != (8, 8):
-                print(f"✗ 帶變換去背尺寸錯誤: {(w2,h2)}")
+                print(f"[FAIL] 帶變換去背尺寸錯誤: {(w2,h2)}")
                 return 1
             o5 = unique_output_path(dst_dir, "bg3.png")
             Image.new("RGB", (4, 8), (0, 200, 60)).save(os.path.join(tmp, "bg3.png"))
             w3, h3 = remove_background(os.path.join(tmp, "bg3.png"), o5,
                                        transforms=[{"type": "rotate", "angle": 90}])
             if (w3, h3) != (8, 4):
-                print(f"✗ 非正方圖旋轉後尺寸錯誤: {(w3,h3)} != (8,4)")
+                print(f"[FAIL] 非正方圖旋轉後尺寸錯誤: {(w3,h3)} != (8,4)")
                 return 1
             # 6) 不勾選去背景：只變換、保留背景
             o6 = unique_output_path(dst_dir, "nobg.png")
             w4, h4 = process_image(os.path.join(tmp, "bg3.png"), o6,
                                    transforms=[{"type": "rotate", "angle": 90}], do_bg=False)
             if (w4, h4) != (8, 4):
-                print(f"✗ 不去背模式尺寸錯誤: {(w4,h4)}")
+                print(f"[FAIL] 不去背模式尺寸錯誤: {(w4,h4)}")
                 return 1
             chk = Image.open(o6)
             if chk.getpixel((0, 0))[3] != 255:
-                print("✗ 不去背模式應保留不透明背景")
+                print("[FAIL] 不去背模式應保留不透明背景")
                 return 1
             # 7) chroma_key 函數（預覽共用）：背景應變透明
             ck = chroma_key(Image.new("RGB", (8, 8), (0, 200, 60)))
             if ck.size != (8, 8) or ck.getpixel((0, 0))[3] != 0:
-                print("✗ chroma_key 背景未透明")
+                print("[FAIL] chroma_key 背景未透明")
                 return 1
             # 8) 區域裁切：比例裁切 + 尺寸隨之改變
             Image.new("RGB", (100, 80), (10, 20, 30)).save(os.path.join(tmp, "crop_src.png"))
@@ -846,10 +855,10 @@ def main():
             w5, h5 = process_image(os.path.join(tmp, "crop_src.png"), o7, do_bg=False,
                                    crop=(0, 0, 0.5, 1.0))
             if (w5, h5) != (50, 80):
-                print(f"✗ 裁切尺寸錯誤: {(w5,h5)} != (50,80)")
+                print(f"[FAIL] 裁切尺寸錯誤: {(w5,h5)} != (50,80)")
                 return 1
             if Image.open(o7).size != (50, 80):
-                print("✗ 裁切後輸出尺寸未改變")
+                print("[FAIL] 裁切後輸出尺寸未改變")
                 return 1
             # 9) 變換 + 裁切順序：先旋轉 90°（100x80→80x100）再裁切左半（→40x100）
             o8 = unique_output_path(dst_dir, "crop2.png")
@@ -857,7 +866,7 @@ def main():
                                    transforms=[{"type": "rotate", "angle": 90}],
                                    crop=(0, 0, 0.5, 1.0))
             if (w6, h6) != (40, 100):
-                print(f"✗ 變換+裁切順序錯誤: {(w6,h6)} != (40,100)")
+                print(f"[FAIL] 變換+裁切順序錯誤: {(w6,h6)} != (40,100)")
                 return 1
             # 10) 裁切 + 去背：crop 後對裁切區域去背
             Image.new("RGB", (100, 80), (0, 200, 60)).save(os.path.join(tmp, "cropbg.png"))
@@ -865,9 +874,9 @@ def main():
             w7, h7 = process_image(os.path.join(tmp, "cropbg.png"), o9, do_bg=True,
                                    crop=(0.25, 0.25, 0.75, 0.75))
             if (w7, h7) != (50, 40):
-                print(f"✗ 裁切+去背尺寸錯誤: {(w7,h7)} != (50,40)")
+                print(f"[FAIL] 裁切+去背尺寸錯誤: {(w7,h7)} != (50,40)")
                 return 1
-            print("✓ 清單計算 / 同名輸出 / 去背演算法（含變換）/ 不去背模式 / chroma_key / 區域裁切（含順序）全部通過")
+            print("[PASS] 清單計算 / 同名輸出 / 去背演算法（含變換）/ 不去背模式 / chroma_key / 區域裁切（含順序）全部通過")
         finally:
             shutil.rmtree(tmp)
         print("自測全部通過")
